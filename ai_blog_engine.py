@@ -40,7 +40,7 @@ if pwd_input == ADMIN_PASSWORD:
                 img_url = media_upload_response.json()["source_url"] if media_upload_response.status_code == 201 else ""
                 
                 genai.configure(api_key=GEMINI_API_KEY)
-                model = genai.GenerativeModel('gemini-1.5-flash-latest') 
+                model = genai.GenerativeModel('gemini-1.5-flash')
                 response = model.generate_content(f"{keyword}에 대해 SEO 최적화 블로그 포스팅을 HTML로 써줘. TITLE: 포함.")
                 
                 text = response.text
