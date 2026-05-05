@@ -23,7 +23,7 @@ pwd_input = st.sidebar.text_input("액세스 비번을 입력하세요", type="p
 
 # 비밀번호 검증 성공 시
 if pwd_input == ADMIN_PASSWORD:
-    st.title("🚀 AI 블로그 대량 자동화 플랫폼 (V7)")
+    st.title("🚀 AI 블로그 대량 자동화 플랫폼 (V7.1)")
     st.info("메인 키워드를 입력하면, AI가 연관 키워드 3개를 뽑아 2시간 간격으로 예약 발행합니다.")
     
     main_keyword = st.text_input("메인 타겟 키워드 (예: 직장인 부업)", "2026년 블로그 수익화")
@@ -39,17 +39,20 @@ if pwd_input == ADMIN_PASSWORD:
                 kw_prompt = f"[{main_keyword}]와 관련된 구글 검색량은 많고 경쟁은 적은 세부(꼬리) 키워드 딱 3개만 콤마(,)로 구분해서 텍스트로만 출력해. (예: 직장인 블로그 수익, 티스토리 애드센스 승인, 워드프레스 초기 비용)"
                 kw_response = model.generate_content(kw_prompt)
                 
-                # 콤마로 분리하고 앞뒤 공백 제거 후 3개만 리스트에 담기
                 keywords = [k.strip() for k in kw_response.text.split(",") if k.strip()][:3]
                 
                 if len(keywords) < 3:
-                    keywords = [f"{main_keyword} 기초", f"{main_keyword} 심화", f"{main_keyword} 실전"] # 오류 방지용 기본값
+                    keywords = [f"{main_keyword} 기초", f"{main_keyword} 심화", f"{main_keyword} 실전"]
                     
                 st.success(f"🎯 추출된 타겟 키워드: {', '.join(keywords)}")
-                time.sleep(15) # 키워드를 뽑고 나서 다음 글쓰기로 넘어가기 전 15초 대기
+                
             except Exception as e:
                 st.error(f"키워드 추출 실패: {e}")
                 st.stop()
+
+        # 🔥 [핵심 추가 1] 키워드 뽑고 나서 구글 서버가 쉴 시간 15초 부여
+        with st.spinner("🚦 키워드 추출 완료! AI 심호흡 중 (15초 대기)..."):
+            time.sleep(15)
 
         # [단계 2] 3개 포스팅 루프 생성 및 예약 발행
         progress_text = "자동 생성 및 워드프레스 배달 진행 중..."
@@ -83,11 +86,9 @@ if pwd_input == ADMIN_PASSWORD:
                         content_final = f'<img src="{img_url}" style="width:100%; border-radius:10px; margin-bottom:20px;">\n\n{text.strip()}'
                         
                     # 3. 예약 시간 계산 (국제 표준시 GMT 기준)
-                    # 첫 번째 글(i=0)은 즉시(0시간), 두 번째 글(i=1)은 2시간 뒤, 세 번째 글(i=2)은 4시간 뒤
                     pub_time_gmt = datetime.utcnow() + timedelta(hours=2*i)
                     iso_time_gmt = pub_time_gmt.strftime("%Y-%m-%dT%H:%M:%S")
                     
-                    # 워드프레스 정책: 미래 시간이면 status를 'future'로 해야 함. 첫 글은 'publish'.
                     post_status = "publish" if i == 0 else "future"
                     
                     # 4. 워드프레스 발행
@@ -107,13 +108,13 @@ if pwd_input == ADMIN_PASSWORD:
                 except Exception as e:
                     st.error(f"❌ [{i+1}/3] 작업 중 오류 발생: {e}")
 
-            # 프로그레스 바 업데이트
             my_bar.progress((i + 1) / 3, text=progress_text)
             
-            # 429 에러 방지를 위한 핵심 로직 (마지막 글을 쓰고 나서는 쉴 필요 없음)
+            # 🔥 [핵심 추가 2] 429 에러 방어: 다음 글쓰기 전 45초 강제 휴식!
+            # 주의: 들여쓰기 완벽 교정됨
             if i < 2:
-            with st.spinner("🚦 구글 AI 서버 무료 제한 방어 중 (45초 대기)..."):
-            time.sleep(45)
+                with st.spinner("🚦 구글 AI 서버 429 에러 방어 중 (45초 대기)..."):
+                    time.sleep(45)
                     
         st.balloons()
         st.success("🎉 대량 생성 및 예약 발행이 완벽하게 끝났습니다! 워드프레스 관리자 창에서 [예약됨] 상태를 확인해 보세요.")
