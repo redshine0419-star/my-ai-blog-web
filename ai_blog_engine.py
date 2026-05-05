@@ -46,6 +46,7 @@ if pwd_input == ADMIN_PASSWORD:
                     keywords = [f"{main_keyword} 기초", f"{main_keyword} 심화", f"{main_keyword} 실전"] # 오류 방지용 기본값
                     
                 st.success(f"🎯 추출된 타겟 키워드: {', '.join(keywords)}")
+                time.sleep(15) # 키워드를 뽑고 나서 다음 글쓰기로 넘어가기 전 15초 대기
             except Exception as e:
                 st.error(f"키워드 추출 실패: {e}")
                 st.stop()
@@ -111,8 +112,8 @@ if pwd_input == ADMIN_PASSWORD:
             
             # 429 에러 방지를 위한 핵심 로직 (마지막 글을 쓰고 나서는 쉴 필요 없음)
             if i < 2:
-                with st.spinner("🚦 구글 AI 서버 쿨타임 (15초 대기 중)..."):
-                    time.sleep(15)
+            with st.spinner("🚦 구글 AI 서버 무료 제한 방어 중 (45초 대기)..."):
+            time.sleep(45)
                     
         st.balloons()
         st.success("🎉 대량 생성 및 예약 발행이 완벽하게 끝났습니다! 워드프레스 관리자 창에서 [예약됨] 상태를 확인해 보세요.")
