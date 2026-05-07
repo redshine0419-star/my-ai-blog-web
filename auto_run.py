@@ -4,73 +4,101 @@ import google.generativeai as genai
 import time
 import urllib.parse
 import os
+import feedparser
 
-# GitHub Secrets에서 환경변수 로드
 def get_env_secrets():
     return {
         "GEMINI_API_KEY": os.environ.get("GEMINI_API_KEY"),
-        "SITE1": {
-            "url": os.environ.get("SITE1_URL"),
-            "media": os.environ.get("SITE1_MEDIA"),
-            "user": os.environ.get("SITE1_USER"),
-            "pass": os.environ.get("SITE1_PASS"),
-            "objective": "건강 및 웰빙 분야. 2026년 최신 의학 정보 기반 팩트 포스팅."
-        },
-        "SITE2": {
-            "url": os.environ.get("SITE2_URL"),
-            "media": os.environ.get("SITE2_MEDIA"),
-            "user": os.environ.get("SITE2_USER"),
-            "pass": os.environ.get("SITE2_PASS"),
-            "objective": "경제 및 비즈니스 분야. 2026년 최신 시장 동향 분석 포스팅."
-        },
-        "SITE3": {
-            "url": os.environ.get("SITE3_URL"),
-            "media": os.environ.get("SITE3_MEDIA"),
-            "user": os.environ.get("SITE3_USER"),
-            "pass": os.environ.get("SITE3_PASS"),
-            "objective": "IT 및 테크 리뷰. 2026년 최신 기술 트렌드 기반 팩트 포스팅."
-        }
+        "SITES": [
+            {
+                "name": "건강 포커스",
+                "url": os.environ.get("SITE1_URL"),
+                "media": os.environ.get("SITE1_MEDIA"),
+                "user": os.environ.get("SITE1_USER"),
+                "pass": os.environ.get("SITE1_PASS"),
+                "objective": "2026년 최신 의학 정보 및 데이터 기반 팩트 중심 건강 포스팅.",
+                "cta_text": "실시간 건강 지표 확인하기"
+            },
+            {
+                "name": "경제 트렌드",
+                "url": os.environ.get("SITE2_URL"),
+                "media": os.environ.get("SITE2_MEDIA"),
+                "user": os.environ.get("SITE2_USER"),
+                "pass": os.environ.get("SITE2_PASS"),
+                "objective": "2026년 글로벌 시장 지표 및 수익화 전략 분석 포스팅.",
+                "cta_text": "오늘의 주요 경제 지표 보기"
+            },
+            {
+                "name": "테크 리뷰",
+                "url": os.environ.get("SITE3_URL"),
+                "media": os.environ.get("SITE3_MEDIA"),
+                "user": os.environ.get("SITE3_USER"),
+                "pass": os.environ.get("SITE3_PASS"),
+                "objective": "2026년 최신 AI 및 신기술 트렌드 테크 분석 포스팅.",
+                "cta_text": "최신 테크 트렌드 리포트 받기"
+            }
+        ]
     }
+
+def get_realtime_keyword(api_key):
+    # 구글 뉴스 RSS (대한민국 주요 뉴스)
+    rss_url = "https://news.google.com/rss?hl=ko&gl=KR&ceid=KR:ko"
+    feed = feedparser.parse(rss_url)
+    news_titles = [entry.title for entry in feed.entries[:10]]
+    combined_titles = " | ".join(news_titles)
+    
+    genai.configure(api_key=api_key)
+    model = genai.GenerativeModel('gemini-2.5-flash')
+    prompt = f"다음 실시간 뉴스들 중에서 건강, 경제, 테크 블로그에서 다루기 좋은 가장 핫한 주제를 선정해 딱 한 단어로 키워드만 말해줘. 뉴스 리스트: {combined_titles}"
+    
+    response = model.generate_content(prompt)
+    return response.text.strip()
 
 def run_auto_post():
     secrets = get_env_secrets()
-    genai.configure(api_key=secrets["GEMINI_API_KEY"])
-    model = genai.GenerativeModel('gemini-2.5-flash')
+    main_keyword = get_realtime_keyword(secrets["GEMINI_API_KEY"])
+    print(f"🎯 선정된 실시간 키워드: {main_keyword}")
     
-    # 오늘의 키워드 생성
-    kw_res = model.generate_content("2026년 현재 대중이 가장 관심 있어 할 건강, 경제, 테크 통합 키워드 1개만 단어로 추천해줘.")
-    main_keyword = kw_res.text.strip()
-    print(f"🎯 오늘의 키워드: {main_keyword}")
+    model = genai.GenerativeModel('gemini-2.5-flash')
 
-    for i in range(1, 4):
-        site = secrets[f"SITE{i}"]
+    for site in secrets["SITES"]:
         try:
-            # 이미지 생성
-            img_prompt = urllib.parse.quote(f"high quality blog thumbnail, {main_keyword}, realistic")
-            img_url = f"https://image.pollinations.ai/prompt/{img_prompt}?width=800&height=400&nologo=true"
+            # 1. 썸네일 생성
+            img_prompt = urllib.parse.quote(f"high quality blog thumbnail, {main_keyword}, {site['name']} concept, minimal design")
+            img_url = f"https://image.pollinations.ai/prompt/{img_prompt}?width=800&height=450&nologo=true"
             img_data = requests.get(img_url).content
             
-            # 워드프레스 미디어 업로드
             media_res = requests.post(
                 site["media"],
-                headers={"Content-Disposition": f'attachment; filename="thumb_{i}.jpg"', "Content-Type": "image/jpeg"},
+                headers={"Content-Disposition": f'attachment; filename="thumb.jpg"', "Content-Type": "image/jpeg"},
                 data=img_data,
                 auth=HTTPBasicAuth(site["user"], site["pass"])
             )
             final_img_url = media_res.json().get("source_url", "")
 
-            # 본문 생성 및 발행
-            prompt = f"키워드 [{main_keyword}]에 대해 {site['objective']}에 맞춰 2026년 최신 팩트 기반 블로그 글을 HTML로 작성해. 인사말 금지, TITLE: [제목] 형식 필수."
-            article = model.generate_content(prompt).text
+            # 2. GEO 최적화 본문 생성 (TL;DR, 리스트, CTA 버튼 포함)
+            article_prompt = f"""키워드 [{main_keyword}]에 대해 {site['objective']}를 작성해.
+            - 2026년 최신 정보 기반. 인사말 절대 금지.
+            - TITLE: [제목] 형식 필수.
+            - 상단에 '핵심 요약(TL;DR)' 박스를 HTML <blockquote> 태그로 포함해.
+            - 모바일 가독성을 위해 H2, H3, <ul> 리스트를 적극 활용해.
+            - 글 하단에 '더 알아보기' 클릭을 유도하는 CTA 버튼을 HTML로 만들어 추가해.
+            - 글 끝에 '이 정보가 도움이 되셨다면 다른 관련 글도 확인해보세요' 문구를 포함해.
+            """
             
-            title = article.split("TITLE:")[1].split("\n")[0].strip() if "TITLE:" in article else f"[{main_keyword}] 최신 리포트"
-            content = f'<img src="{final_img_url}" style="width:100%;">{article}'
+            res = model.generate_content(article_prompt).text
+            title = res.split("TITLE:")[1].split("\n")[0].strip() if "TITLE:" in res else f"[{main_keyword}] 최신 리포트"
+            
+            # 본문 가공 (이미지 + 내용 + CTA 버튼 스타일링)
+            cta_button = f'<div style="text-align:center; margin:30px 0;"><a href="#" style="background:#007bff; color:white; padding:15px 25px; border-radius:5px; text-decoration:none; font-weight:bold;">{site["cta_text"]}</a></div>'
+            content = f'<img src="{final_img_url}" style="width:100%; border-radius:10px; margin-bottom:20px;">\n{res}\n{cta_button}'
             
             requests.post(site["url"], auth=HTTPBasicAuth(site["user"], site["pass"]), json={"title": title, "content": content, "status": "publish"})
-            print(f"✅ 사이트 {i} 발행 완료")
+            print(f"✅ {site['name']} 발행 완료")
             time.sleep(30)
+            
         except Exception as e:
-            print(f"❌ 사이트 {i} 에러: {e}")
+            print(f"❌ {site['name']} 에러: {e}")
 
 if __name__ == "__main__":
     run_auto_post()
