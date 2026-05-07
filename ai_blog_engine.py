@@ -80,7 +80,7 @@ if pwd_input == ADMIN_PASSWORD:
                     image_response = requests.get(image_api_url)
                     media_upload_response = requests.post(
                         config["media_url"],
-                        headers={"Content-Disposition": f'attachment; filename="{main_keyword}_thumb.jpg"', "Content-Type": "image/jpeg"},
+                        headers={"Content-Disposition": f'attachment; filename="thumb_{i}.jpg"', "Content-Type": "image/jpeg"},
                         data=image_response.content,
                         auth=HTTPBasicAuth(config["user"], config["password"])
                     )
