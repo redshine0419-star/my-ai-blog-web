@@ -16,6 +16,7 @@ def get_env_secrets():
                 "media": os.environ.get("SITE1_MEDIA"),
                 "user": os.environ.get("SITE1_USER"),
                 "pass": os.environ.get("SITE1_PASS"),
+                "color": "#00A86B", # 메디컬 그린
                 "objective": "2026년 최신 의학 정보 및 데이터 기반 팩트 중심 건강 포스팅.",
                 "cta_text": "실시간 건강 지표 확인하기"
             },
@@ -25,6 +26,7 @@ def get_env_secrets():
                 "media": os.environ.get("SITE2_MEDIA"),
                 "user": os.environ.get("SITE2_USER"),
                 "pass": os.environ.get("SITE2_PASS"),
+                "color": "#1A237E", # 네이비 블루
                 "objective": "2026년 글로벌 시장 지표 및 수익화 전략 분석 포스팅.",
                 "cta_text": "오늘의 주요 경제 지표 보기"
             },
@@ -34,6 +36,7 @@ def get_env_secrets():
                 "media": os.environ.get("SITE3_MEDIA"),
                 "user": os.environ.get("SITE3_USER"),
                 "pass": os.environ.get("SITE3_PASS"),
+                "color": "#6200EE", # 일렉트릭 퍼플
                 "objective": "2026년 최신 AI 및 신기술 트렌드 테크 분석 포스팅.",
                 "cta_text": "최신 테크 트렌드 리포트 받기"
             }
@@ -90,7 +93,7 @@ def run_auto_post():
             title = res.split("TITLE:")[1].split("\n")[0].strip() if "TITLE:" in res else f"[{main_keyword}] 최신 리포트"
             
             # 본문 가공 (이미지 + 내용 + CTA 버튼 스타일링)
-            cta_button = f'<div style="text-align:center; margin:30px 0;"><a href="#" style="background:#007bff; color:white; padding:15px 25px; border-radius:5px; text-decoration:none; font-weight:bold;">{site["cta_text"]}</a></div>'
+            cta_button = f'<div style="text-align:center; margin:40px 0;"><a href="#" style="background:{site['color']}; color:white; padding:18px 35px; border-radius:8px; text-decoration:none; font-weight:bold; font-size:18px; display:inline-block; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">{site["cta_text"]}</a></div>'
             content = f'<img src="{final_img_url}" style="width:100%; border-radius:10px; margin-bottom:20px;">\n{res}\n{cta_button}'
             
             requests.post(site["url"], auth=HTTPBasicAuth(site["user"], site["pass"]), json={"title": title, "content": content, "status": "publish"})
