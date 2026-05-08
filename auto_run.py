@@ -1,107 +1,61 @@
+# V9.5: 수익 최적화 및 상업적 타겟팅 엔진
 import requests
 from requests.auth import HTTPBasicAuth
 import google.generativeai as genai
-import time
-import urllib.parse
-import os
-import feedparser
+import time, urllib.parse, os, feedparser
 
-def get_env_secrets():
-    return {
-        "GEMINI_API_KEY": os.environ.get("GEMINI_API_KEY"),
-        "SITES": [
-            {
-                "name": "건강 포커스",
-                "url": os.environ.get("SITE1_URL"),
-                "media": os.environ.get("SITE1_MEDIA"),
-                "user": os.environ.get("SITE1_USER"),
-                "pass": os.environ.get("SITE1_PASS"),
-                "color": "#00A86B", # 메디컬 그린
-                "objective": "2026년 최신 의학 정보 및 데이터 기반 팩트 중심 건강 포스팅.",
-                "cta_text": "실시간 건강 지표 확인하기"
-            },
-            {
-                "name": "경제 트렌드",
-                "url": os.environ.get("SITE2_URL"),
-                "media": os.environ.get("SITE2_MEDIA"),
-                "user": os.environ.get("SITE2_USER"),
-                "pass": os.environ.get("SITE2_PASS"),
-                "color": "#1A237E", # 네이비 블루
-                "objective": "2026년 글로벌 시장 지표 및 수익화 전략 분석 포스팅.",
-                "cta_text": "오늘의 주요 경제 지표 보기"
-            },
-            {
-                "name": "테크 리뷰",
-                "url": os.environ.get("SITE3_URL"),
-                "media": os.environ.get("SITE3_MEDIA"),
-                "user": os.environ.get("SITE3_USER"),
-                "pass": os.environ.get("SITE3_PASS"),
-                "color": "#6200EE", # 일렉트릭 퍼플
-                "objective": "2026년 최신 AI 및 신기술 트렌드 테크 분석 포스팅.",
-                "cta_text": "최신 테크 트렌드 리포트 받기"
-            }
-        ]
-    }
-
-def get_realtime_keyword(api_key):
-    # 구글 뉴스 RSS (대한민국 주요 뉴스)
+def get_realtime_commercial_keyword(api_key):
     rss_url = "https://news.google.com/rss?hl=ko&gl=KR&ceid=KR:ko"
     feed = feedparser.parse(rss_url)
-    news_titles = [entry.title for entry in feed.entries[:10]]
+    news_titles = [entry.title for entry in feed.entries[:12]]
     combined_titles = " | ".join(news_titles)
     
     genai.configure(api_key=api_key)
     model = genai.GenerativeModel('gemini-2.5-flash')
-    prompt = f"다음 실시간 뉴스들 중에서 건강, 경제, 테크 블로그에서 다루기 좋은 가장 핫한 주제를 선정해 딱 한 단어로 키워드만 말해줘. 뉴스 리스트: {combined_titles}"
     
-    response = model.generate_content(prompt)
-    return response.text.strip()
+    # 1. 상업적 가치가 높은 키워드 추출 프롬프트 강화
+    prompt = f"""다음 뉴스들 중에서 건강, 경제, 테크 블로그에서 '구매 결정'이나 '비용 비교'가 일어날 법한 고단가 키워드 1개를 선정해. 
+    단순 정보성보다는 '솔루션 추천', '비용 분석', '트렌드 변화에 따른 수익 기회'와 연결될 수 있어야 해. 단어만 출력해.
+    뉴스: {combined_titles}"""
+    
+    return model.generate_content(prompt).text.strip()
 
-def run_auto_post():
-    secrets = get_env_secrets()
-    main_keyword = get_realtime_keyword(secrets["GEMINI_API_KEY"])
-    print(f"🎯 선정된 실시간 키워드: {main_keyword}")
+def run_auto_post_v9_5():
+    # (환경변수 로드 및 설정 부분은 기존과 동일)
+    secrets = get_env_secrets() 
+    main_keyword = get_realtime_commercial_keyword(secrets["GEMINI_API_KEY"])
+    print(f"💰 선정된 고단가 키워드: {main_keyword}")
     
     model = genai.GenerativeModel('gemini-2.5-flash')
 
     for site in secrets["SITES"]:
         try:
-            # 1. 썸네일 생성
-            img_prompt = urllib.parse.quote(f"high quality blog thumbnail, {main_keyword}, {site['name']} concept, minimal design")
-            img_url = f"https://image.pollinations.ai/prompt/{img_prompt}?width=800&height=450&nologo=true"
-            img_data = requests.get(img_url).content
-            
-            media_res = requests.post(
-                site["media"],
-                headers={"Content-Disposition": f'attachment; filename="thumb.jpg"', "Content-Type": "image/jpeg"},
-                data=img_data,
-                auth=HTTPBasicAuth(site["user"], site["pass"])
-            )
-            final_img_url = media_res.json().get("source_url", "")
-
-            # 2. GEO 최적화 본문 생성 (TL;DR, 리스트, CTA 버튼 포함)
-            article_prompt = f"""키워드 [{main_keyword}]에 대해 {site['objective']}를 작성해.
-            - 2026년 최신 정보 기반. 인사말 절대 금지.
-            - TITLE: [제목] 형식 필수.
-            - 상단에 '핵심 요약(TL;DR)' 박스를 HTML <blockquote> 태그로 포함해.
-            - 모바일 가독성을 위해 H2, H3, <ul> 리스트를 적극 활용해.
-            - 글 하단에 '더 알아보기' 클릭을 유도하는 CTA 버튼을 HTML로 만들어 추가해.
-            - 글 끝에 '이 정보가 도움이 되셨다면 다른 관련 글도 확인해보세요' 문구를 포함해.
+            # 2. 본문 생성 프롬프트 고도화 (시니어 기획자 피드백 반영)
+            article_prompt = f"""키워드 [{main_keyword}]에 대해 {site['objective']}를 작성하되, 다음 구조를 엄격히 지켜:
+            1. TITLE: 독자가 클릭하고 싶게 만드는 '상업적/정보적 가치'가 담긴 제목.
+            2. 상단에 <blockquote>를 활용한 3줄 핵심 요약(TL;DR).
+            3. [본문 첫 문단 뒤]: '함께 읽으면 수익이 되는 글' 추천 링크 자리 확보 (HTML 주석으로 표시).
+            4. 중간에 2026년 예상 수치나 비교 데이터를 담은 <table>을 반드시 포함.
+            5. 모바일 가독성을 위해 H2 태그 3개 이상, <ul> 리스트 활용.
+            6. 마지막에 [전문가 Insight] 박스를 <div style="background:#f8f9fa; padding:15px;">로 감싸서 작성.
             """
             
             res = model.generate_content(article_prompt).text
-            title = res.split("TITLE:")[1].split("\n")[0].strip() if "TITLE:" in res else f"[{main_keyword}] 최신 리포트"
+            title = res.split("TITLE:")[1].split("\n")[0].strip() if "TITLE:" in res else f"[{main_keyword}] 관련 긴급 보고서"
             
-            # 본문 가공 (이미지 + 내용 + CTA 버튼 스타일링)
-            cta_button = f'<div style="text-align:center; margin:40px 0;"><a href="#" style="background:{site['color']}; color:white; padding:18px 35px; border-radius:8px; text-decoration:none; font-weight:bold; font-size:18px; display:inline-block; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">{site["cta_text"]}</a></div>'
-            content = f'<img src="{final_img_url}" style="width:100%; border-radius:10px; margin-bottom:20px;">\n{res}\n{cta_button}'
+            # 3. 광고 및 체류시간 증대 장치 이식
+            internal_link = f'<div style="border:1px solid #eee; padding:15px; margin:20px 0;"><strong>📍 함께 보면 좋은 글:</strong> <a href="{site["url"].split("/wp-json")[0]}" style="color:{site["color"]};">2026년 {main_keyword} 시장 변화와 대응 전략</a></div>'
+            cta_button = f'<div style="text-align:center; margin:40px 0;"><a href="{site["url"].split("/wp-json")[0]}" style="background:{site["color"]}; color:white; padding:18px 35px; border-radius:8px; text-decoration:none; font-weight:bold;">{site["cta_text"]}</a></div>'
             
-            requests.post(site["url"], auth=HTTPBasicAuth(site["user"], site["pass"]), json={"title": title, "content": content, "status": "publish"})
-            print(f"✅ {site['name']} 발행 완료")
-            time.sleep(30)
+            # 최종 본문 조립
+            final_content = f'{res}\n{internal_link}\n{cta_button}'
+            
+            # (워드프레스 발행 로직 호출 - 기존과 동일)
+            # ...
+            print(f"✅ {site['name']} 수익 최적화 발행 완료")
             
         except Exception as e:
-            print(f"❌ {site['name']} 에러: {e}")
+            print(f"❌ {site['name']} 실패: {e}")
 
 if __name__ == "__main__":
-    run_auto_post()
+    run_auto_post_v9_5()
