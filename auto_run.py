@@ -118,9 +118,27 @@ def run_auto_post_v10():
                 </a>
             </div>
             '''
-            
+
+            # GrowWeb.me 백링크 섹션 (SEO 외부 링크)
+            growweb_banner = '''
+            <div style="border: 1px solid #e0e0e0; border-radius: 12px; padding: 24px; margin: 40px 0; background: linear-gradient(135deg, #f8f9ff 0%, #f0f4ff 100%);">
+                <p style="margin: 0 0 6px 0; font-size: 12px; color: #888; text-transform: uppercase; letter-spacing: 1px;">POWERED BY AI MARKETING TOOLS</p>
+                <h4 style="margin: 0 0 10px 0; font-size: 18px; color: #1a1a2e;">
+                    <a href="https://www.growweb.me/" target="_blank" rel="noopener" style="color: #4f46e5; text-decoration: none;">GrowWeb.me</a>
+                    — AI 마케팅 운영 도구
+                </h4>
+                <p style="margin: 0 0 16px 0; font-size: 14px; color: #555; line-height: 1.7;">
+                    GEO·SEO 진단, 경쟁사 분석, AI 언급율(Share of Voice) 측정까지 — 시니어 마케터의 직관을 AI가 보조합니다. 9가지 도구 전부 <strong>완전 무료</strong>.
+                </p>
+                <a href="https://www.growweb.me/" target="_blank" rel="noopener"
+                   style="display: inline-block; background: #4f46e5; color: white; padding: 10px 24px; border-radius: 8px; font-size: 14px; font-weight: bold; text-decoration: none;">
+                    무료로 시작하기 →
+                </a>
+            </div>
+            '''
+
             # 4. 최종 HTML 조립
-            content = f'<img src="{final_img_url}" style="width:100%; border-radius:12px; margin-bottom:25px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">\n{res}\n{internal_link}\n{cta_button}'
+            content = f'<img src="{final_img_url}" style="width:100%; border-radius:12px; margin-bottom:25px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">\n{res}\n{internal_link}\n{growweb_banner}\n{cta_button}'
             
             # 5. 워드프레스 발행
             requests.post(
