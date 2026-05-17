@@ -15,8 +15,7 @@ def get_env_secrets():
                 "user": os.environ.get("SITE1_USER"),
                 "pass": os.environ.get("SITE1_PASS"),
                 "color": "#00A86B",
-                "objective": "2026년 최신 의학 정보 및 데이터 기반 팩트 중심 건강 포스팅.",
-                "cta_text": "🔥 가장 인기 있는 건강 리포트 보기"
+                "objective": "2026년 최신 의학 정보 및 데이터 기반 팩트 중심 건강 포스팅."
             },
             {
                 "name": "경제 트렌드",
@@ -25,8 +24,7 @@ def get_env_secrets():
                 "user": os.environ.get("SITE2_USER"),
                 "pass": os.environ.get("SITE2_PASS"),
                 "color": "#1A237E",
-                "objective": "2026년 글로벌 시장 지표 및 수익화 전략 분석 포스팅.",
-                "cta_text": "📈 실시간 경제 지표 분석 더보기"
+                "objective": "2026년 글로벌 시장 지표 및 수익화 전략 분석 포스팅."
             },
             {
                 "name": "넥스트 테크 웨이브",
@@ -35,8 +33,7 @@ def get_env_secrets():
                 "user": os.environ.get("SITE3_USER"),
                 "pass": os.environ.get("SITE3_PASS"),
                 "color": "#6200EE",
-                "objective": "2026년 최신 AI 및 신기술 트렌드 테크 분석 포스팅.",
-                "cta_text": "🚀 신기술 핵심 인사이트 확인하기"
+                "objective": "2026년 최신 AI 및 신기술 트렌드 테크 분석 포스팅."
             }
         ]
     }
@@ -98,28 +95,7 @@ def run_auto_post_v10():
             res = model.generate_content(article_prompt).text
             title = res.split("TITLE:")[1].split("\n")[0].strip() if "TITLE:" in res else f"[{main_keyword}] 2026 완벽 분석 리포트"
             
-            # 3. 무인 수익화 장치 조립 (체류 시간 증대 및 내부 순환 링크)
-            site_home = site["url"].split("/wp-json")[0]
-            
-            # 중간 내부 링크 유도 (PV 상승)
-            internal_link = f'''
-            <div style="border: 1px dashed {site['color']}; border-radius: 8px; padding: 20px; margin: 30px 0; background-color: #fafafa;">
-                <h3 style="margin-top: 0; color: {site['color']}; fontSize: 18px;">💡 연관 인사이트</h3>
-                <p style="margin-bottom: 0;">이 글을 읽은 분들이 가장 많이 클릭한 <strong>최신 트렌드 분석</strong>도 함께 확인해 보세요.</p>
-                <a href="{site_home}" style="color: {site['color']}; text-decoration: underline; font-weight: bold; display: block; margin-top: 10px;">👉 관련 글 리스트 보러 가기</a>
-            </div>
-            '''
-            
-            # 최종 CTA 버튼 (블로그 홈/카테고리로 유도하여 추가 탐색 유발)
-            cta_button = f'''
-            <div style="text-align:center; margin: 50px 0;">
-                <a href="{site_home}" style="background-color:{site['color']}; color:white; padding: 18px 40px; border-radius: 50px; text-decoration:none; font-weight:bold; font-size: 1.1em; display:inline-block; box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: all 0.3s ease;">
-                    {site["cta_text"]}
-                </a>
-            </div>
-            '''
-
-            # GrowWeb.me 백링크 섹션 (SEO 외부 링크)
+            # 3. GrowWeb.me 백링크 섹션 (SEO 외부 링크)
             growweb_banner = '''
             <div style="border: 1px solid #e0e0e0; border-radius: 12px; padding: 24px; margin: 40px 0; background: linear-gradient(135deg, #f8f9ff 0%, #f0f4ff 100%);">
                 <p style="margin: 0 0 6px 0; font-size: 12px; color: #888; text-transform: uppercase; letter-spacing: 1px;">POWERED BY AI MARKETING TOOLS</p>
@@ -138,7 +114,7 @@ def run_auto_post_v10():
             '''
 
             # 4. 최종 HTML 조립
-            content = f'<img src="{final_img_url}" style="width:100%; border-radius:12px; margin-bottom:25px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">\n{res}\n{internal_link}\n{growweb_banner}\n{cta_button}'
+            content = f'<img src="{final_img_url}" style="width:100%; border-radius:12px; margin-bottom:25px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">\n{res}\n{growweb_banner}'
             
             # 5. 워드프레스 발행
             requests.post(
@@ -146,7 +122,7 @@ def run_auto_post_v10():
                 auth=HTTPBasicAuth(site["user"], site["pass"]),
                 json={"title": title, "content": content, "status": "publish"}
             )
-            print(f"✅ {site['name']} V10 수익 최적화 발행 완료 (Main: {site_home})")
+            print(f"✅ {site['name']} V10 수익 최적화 발행 완료")
             time.sleep(15) # 과부하 방지
             
         except Exception as e:
