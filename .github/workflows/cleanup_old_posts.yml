@@ -1,0 +1,33 @@
+name: Cleanup Old Post CTAs (One-time)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Install dependencies
+        run: pip install requests
+
+      - name: Remove old CTAs from existing posts
+        env:
+          DRY_RUN: "false"
+          SITE1_URL: ${{ secrets.SITE1_URL }}
+          SITE1_USER: ${{ secrets.SITE1_USER }}
+          SITE1_PASS: ${{ secrets.SITE1_PASS }}
+          SITE2_URL: ${{ secrets.SITE2_URL }}
+          SITE2_USER: ${{ secrets.SITE2_USER }}
+          SITE2_PASS: ${{ secrets.SITE2_PASS }}
+          SITE3_URL: ${{ secrets.SITE3_URL }}
+          SITE3_USER: ${{ secrets.SITE3_USER }}
+          SITE3_PASS: ${{ secrets.SITE3_PASS }}
+        run: python update_existing_posts.py
